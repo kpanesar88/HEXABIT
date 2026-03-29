@@ -25,7 +25,8 @@
 #define LIS3DH_I2C_ADDR       0x19
 #define LIS3DH_ADDR           (LIS3DH_I2C_ADDR << 1)
 #define LIS3DH_REG_WHO_AM_I   0x0F
-
+#define LIS3DH_REG_CTRL1 	  0x20
+#define LIS3DH_REG_OUT_X_L    0x28
 
 
 I2C_HandleTypeDef hi2c1;
@@ -36,7 +37,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
-
+void read_accel(int16_t *x, int16_t *y, int16_t *z);
+int countStep(int16_t x);
 
 int _write(int file, char *ptr, int len)
 {
@@ -59,34 +61,92 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
 
-  uint8_t who_am_i = 0;
+  //ENABLE ACCELEROMETER
+  uint8_t ctrl1_value = 0x57; // all axis enabled
+
+  HAL_I2C_Mem_Write(&hi2c1,
+		  	  	  	LIS3DH_ADDR,
+					LIS3DH_REG_CTRL1,
+					I2C_MEMADD_SIZE_8BIT,
+					&ctrl1_value,
+					1,
+					HAL_MAX_DELAY);
+
+  //ACCELOROMETER VARIABLES
+  int16_t x, y, z;
+
+  //STEP COUNTING VARIABLES
+  int steps = 0;
 
   while (1)
   {
-	  /* TEST COMMUNICATION WITH LIS3DH
-      HAL_StatusTypeDef status;
-      status = HAL_I2C_Mem_Read(&hi2c1,
-                                LIS3DH_ADDR,
-                                LIS3DH_REG_WHO_AM_I,
-                                I2C_MEMADD_SIZE_8BIT,
-                                &who_am_i,
-                                1,
-                                HAL_MAX_DELAY);
-      if (status == HAL_OK)
-      {
-          printf("WHO_AM_I: 0x%02X\r\n", who_am_i);
-      }
-      else
-      {
-          printf("I2C ERROR\r\n");
-      }
 
-      HAL_Delay(1000);
-      */
-  }
+		  if (countStep(x))
+		  {
+			  steps++;
+			  printf("STEP: %d\r\n", steps);
+		  }
 
+	      read_accel(&x, &y, &z);
+	      HAL_Delay(200);
 
 }
+}
+
+void read_accel(int16_t *x,int16_t *y,int16_t *z){
+	uint8_t data[6];
+
+	    HAL_I2C_Mem_Read(&hi2c1,
+	                     LIS3DH_ADDR,
+	                     LIS3DH_REG_OUT_X_L | 0x80,
+	                     I2C_MEMADD_SIZE_8BIT,
+	                     data,
+	                     6,
+	                     HAL_MAX_DELAY);
+
+	    *x = (int16_t)(data[1] << 8 | data[0]);
+	    *y = (int16_t)(data[3] << 8 | data[2]);
+	    *z = (int16_t)(data[5] << 8 | data[4]);
+}
+
+int countStep(int16_t x)
+{
+    static int16_t prev_x = 0;
+    static uint8_t state = 0;  // 0 = waiting for positive, 1 = waiting for negative
+    static uint32_t last_step_time = 0;
+
+    const int16_t THRESHOLD = 2000;
+    const uint32_t MIN_INTERVAL = 350;
+
+    uint32_t now = HAL_GetTick();
+
+    // Step 1: detect strong positive swing
+    if (state == 0 && x > THRESHOLD)
+    {
+        state = 1;
+    }
+
+    // Step 2: detect strong negative swing
+    if (state == 1 && x < -THRESHOLD)
+    {
+        if (now - last_step_time > MIN_INTERVAL)
+        {
+            last_step_time = now;
+            state = 0;
+            return 1;
+        }
+        state = 0;
+    }
+
+    prev_x = x;
+    return 0;
+}
+
+
+
+
+
+
 
 
 void SystemClock_Config(void)
@@ -233,6 +293,16 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
+
+
+
+
+
+
+
+
+
+
 #ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
