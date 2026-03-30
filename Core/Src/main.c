@@ -38,7 +38,11 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 void read_accel(int16_t *x, int16_t *y, int16_t *z);
-int countStep(int16_t x);
+int count_step(int16_t x);
+float get_distance_km(uint32_t steps);
+float get_distance_miles(uint32_t steps);
+
+
 
 int _write(int file, char *ptr, int len)
 {
@@ -81,14 +85,22 @@ int main(void)
   while (1)
   {
 
-		  if (countStep(x))
-		  {
-			  steps++;
-			  printf("STEP: %d\r\n", steps);
-		  }
-
 	      read_accel(&x, &y, &z);
 	      HAL_Delay(200);
+
+	      if (count_step(x))
+	      		  {
+	      			  steps++;
+	      			  printf("STEP: %d\r\n", steps);
+	      			  float distance_km = get_distance_km(steps);
+	      			  float distance_miles = get_distance_miles(steps);
+	      			  printf("Distance: %.2f km, %.2f Miles: \n", distance_km, distance_miles);
+
+	      		  }
+
+
+
+
 
 }
 }
@@ -109,7 +121,7 @@ void read_accel(int16_t *x,int16_t *y,int16_t *z){
 	    *z = (int16_t)(data[5] << 8 | data[4]);
 }
 
-int countStep(int16_t x)
+int count_step(int16_t x)
 {
     static int16_t prev_x = 0;
     static uint8_t state = 0;  // 0 = waiting for positive, 1 = waiting for negative
@@ -142,7 +154,13 @@ int countStep(int16_t x)
     return 0;
 }
 
+float get_distance_km(uint32_t steps){
+	return steps * 0.00075f;
+}
 
+float get_distance_miles(uint32_t steps){
+	return steps * 0.000466f;
+}
 
 
 
