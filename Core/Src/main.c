@@ -37,10 +37,13 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
+
+// FUNCTION DELCARATIONS
 void read_accel(int16_t *x, int16_t *y, int16_t *z);
 int count_step(int16_t x);
 float get_distance_km(uint32_t steps);
 float get_distance_miles(uint32_t steps);
+float get_calories(uint32_t steps);
 
 
 
@@ -94,7 +97,10 @@ int main(void)
 	      			  printf("STEP: %d\r\n", steps);
 	      			  float distance_km = get_distance_km(steps);
 	      			  float distance_miles = get_distance_miles(steps);
-	      			  printf("Distance: %.2f km, %.2f Miles: \n", distance_km, distance_miles);
+	      			  printf("Distance: %.2f km, %.2f Miles: \r\n", distance_km, distance_miles);
+	      			  float calories = get_calories(steps);
+	      			  printf("Calories: %.2f cal, \r\n", calories);
+
 
 	      		  }
 
@@ -162,7 +168,9 @@ float get_distance_miles(uint32_t steps){
 	return steps * 0.000466f;
 }
 
-
+float get_calories(uint32_t steps){
+	return steps * 0.04f;
+}
 
 
 
