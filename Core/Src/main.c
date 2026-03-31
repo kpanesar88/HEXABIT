@@ -14,30 +14,56 @@
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
-*/
-
-
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
 
+/* USER CODE END Includes */
 
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
 #define LIS3DH_I2C_ADDR       0x19
 #define LIS3DH_ADDR           (LIS3DH_I2C_ADDR << 1)
 #define LIS3DH_REG_WHO_AM_I   0x0F
 #define LIS3DH_REG_CTRL1 	  0x20
 #define LIS3DH_REG_OUT_X_L    0x28
 
+/* USER CODE END PD */
 
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+
+SPI_HandleTypeDef hspi1;
+
 UART_HandleTypeDef huart2;
 
+/* USER CODE BEGIN PV */
 
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
-
+static void MX_SPI1_Init(void);
+/* USER CODE BEGIN PFP */
 // FUNCTION DELCARATIONS
 void read_accel(int16_t *x, int16_t *y, int16_t *z);
 int count_step(int16_t x);
@@ -45,70 +71,93 @@ float get_distance_km(uint32_t steps);
 float get_distance_miles(uint32_t steps);
 float get_calories(uint32_t steps);
 
+/* USER CODE END PFP */
 
-
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
 int _write(int file, char *ptr, int len)
 {
     HAL_UART_Transmit(&huart2, (uint8_t*)ptr, len, HAL_MAX_DELAY);
     return len;
 }
 
+/* USER CODE END 0 */
 
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
+  /* USER CODE BEGIN 1 */
 
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
+  /* USER CODE BEGIN Init */
 
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
   SystemClock_Config();
 
+  /* USER CODE BEGIN SysInit */
 
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
-
-  //ENABLE ACCELEROMETER
+  MX_SPI1_Init();
+  /* USER CODE BEGIN 2 */
   uint8_t ctrl1_value = 0x57; // all axis enabled
 
   HAL_I2C_Mem_Write(&hi2c1,
-		  	  	  	LIS3DH_ADDR,
-					LIS3DH_REG_CTRL1,
-					I2C_MEMADD_SIZE_8BIT,
-					&ctrl1_value,
-					1,
-					HAL_MAX_DELAY);
+  		  	  	  	LIS3DH_ADDR,
+  					LIS3DH_REG_CTRL1,
+  					I2C_MEMADD_SIZE_8BIT,
+  					&ctrl1_value,
+  					1,
+  					HAL_MAX_DELAY);
 
-  //ACCELOROMETER VARIABLES
-  int16_t x, y, z;
+    //ACCELOROMETER VARIABLES
+    int16_t x, y, z;
 
-  //STEP COUNTING VARIABLES
-  int steps = 0;
+    //STEP COUNTING VARIABLES
+    int steps = 0;
+  /* USER CODE END 2 */
 
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* USER CODE END WHILE */
 
-	      read_accel(&x, &y, &z);
-	      HAL_Delay(200);
+    /* USER CODE BEGIN 3 */
 
-	      if (count_step(x))
-	      		  {
-	      			  steps++;
-	      			  printf("STEP: %d\r\n", steps);
-	      			  float distance_km = get_distance_km(steps);
-	      			  float distance_miles = get_distance_miles(steps);
-	      			  printf("Distance: %.2f km, %.2f Miles: \r\n", distance_km, distance_miles);
-	      			  float calories = get_calories(steps);
-	      			  printf("Calories: %.2f cal, \r\n", calories);
+	  read_accel(&x, &y, &z);
+	  	      HAL_Delay(200);
 
-
-	      		  }
-
-
+	  	      if (count_step(x))
+	  	      		  {
+	  	      			  steps++;
+	  	      			  printf("STEP: %d\r\n", steps);
+	  	      			  float distance_km = get_distance_km(steps);
+	  	      			  float distance_miles = get_distance_miles(steps);
+	  	      			  printf("Distance: %.2f km, %.2f Miles: \r\n", distance_km, distance_miles);
+	  	      			  float calories = get_calories(steps);
+	  	      			  printf("Calories: %.2f cal, \r\n", calories);
 
 
-
-}
+	  	      		  }
+  }
+  /* USER CODE END 3 */
 }
 
 void read_accel(int16_t *x,int16_t *y,int16_t *z){
@@ -126,7 +175,6 @@ void read_accel(int16_t *x,int16_t *y,int16_t *z){
 	    *y = (int16_t)(data[3] << 8 | data[2]);
 	    *z = (int16_t)(data[5] << 8 | data[4]);
 }
-
 int count_step(int16_t x)
 {
     static int16_t prev_x = 0;
@@ -175,6 +223,12 @@ float get_calories(uint32_t steps){
 
 
 
+
+
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -218,6 +272,11 @@ void SystemClock_Config(void)
   }
 }
 
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_I2C1_Init(void)
 {
 
@@ -247,6 +306,49 @@ static void MX_I2C1_Init(void)
 
 }
 
+/**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_USART2_UART_Init(void)
 {
 
@@ -275,6 +377,11 @@ static void MX_USART2_UART_Init(void)
 
 }
 
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -289,7 +396,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -297,18 +410,40 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pin : PC7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -319,16 +454,6 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-
-
-
-
-
-
-
-
-
 #ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
